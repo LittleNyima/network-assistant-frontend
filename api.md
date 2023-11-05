@@ -38,7 +38,7 @@
 
 - 请求地址 `GET /mpweixin/chatbot/receive`
 
-- 请求体：
+- 请求参数：
 
   | 字段      | 类型   | 说明                                                         | 是否必填 |
   | --------- | ------ | ------------------------------------------------------------ | -------- |
@@ -68,6 +68,34 @@
   curl -X GET \
   -H "Content-Type: application/json" \
   "https://api.example.com/mpweixin/chatbot/receive?sessionId=80d5a793-0d16-4c15-9246-f6bc87e77ed6&timestamp=2023/11/03%2015:30:00"
+  ```
+
+### Session 关闭
+
+- 请求地址 `POST /mpweixin/chatbot/destroy`
+
+- 请求体：
+
+  | 字段      | 类型   | 说明                                                         | 是否必填 |
+  | --------- | ------ | ------------------------------------------------------------ | -------- |
+  | sessionId | String | 对话的 id，用于区分不同的对话，每次进入小程序时生成，小程序退出后销毁 | 是       |
+
+- 返回参数：
+
+  | 字段    | 类型   | 说明                             | 是否必填 |
+  | ------- | ------ | -------------------------------- | -------- |
+  | code    | Number | 接口状态码，定义与HTTP状态码相同 | 是       |
+  | message | String | 状态说明信息                     | 是       |
+
+- 示例：
+
+  ```shell
+  curl -X POST \
+  -H "Content-Type: application/json" \
+  -d '{
+    "sessionId": "80d5a793-0d16-4c15-9246-f6bc87e77ed6"
+  }' \
+  https://api.example.com/mpweixin/chatbot/destroy
   ```
 
 ## WebSocket 接口

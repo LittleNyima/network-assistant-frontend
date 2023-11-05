@@ -42,6 +42,8 @@ export default {
             this.disableInteract = true
             let message = { text: this.inputMessage.trim(), isBot: false, failure: false, id: 'message-' + this.messages.length }
             this.messages.push(message)
+            this.scrollIntoView = this.messages[this.messages.length - 1].id
+            this.inputMessage = ''
             let responseMsg = { text: '', isBot: true, failure: false, id: 'message-' + this.messages.length }
             let timestamp = config.getCurrentDateTime()
             new Promise((resolve, reject) => {
@@ -55,7 +57,7 @@ export default {
                     },
                     timeout: 1500,
                     success: res => {
-                        if (res.data.code === 200) {
+                        if (res.statusCode === 200 && res.data.code === 200) {
                             resolve(res)
                         } else {
                             reject({ type: 'send', error: res })
@@ -79,10 +81,10 @@ export default {
                             },
                             timeout: 1500,
                             success: res => {
-                                if (res.data.code === 200) {
+                                if (res.statusCode === 200 && res.data.code === 200) {
                                     responseMsg.text += res.data.data.content
                                     generating = false
-                                } else if (res.data.code === 100) {
+                                } else if (res.statusCode === 200 && res.data.code === 100) {
                                     responseMsg.text += res.data.data.content
                                 } else {
                                     reject({ type: 'receive', error: res })
@@ -114,12 +116,20 @@ export default {
                     icon: 'error'
                 })
             })
-            this.scrollIntoView = this.messages[this.messages.length - 1].id
-            this.inputMessage = ''
         },
     },
     created () {
         this.sessionId = config.generateUUID()
+    },
+    unmounted() {
+        uni.request({
+            url: config.adornUrl('mpweixin/chatbot/destroy'),
+            method: 'POST',
+            data: {
+                sessionId: this.sessionId
+            },
+            timeout: 3000
+        })
     }
 }
 </script>
