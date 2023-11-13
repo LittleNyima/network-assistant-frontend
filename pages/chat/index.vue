@@ -3,12 +3,13 @@
         <scroll-view scroll-with-animation scroll-y :scroll-into-view="scrollIntoView" class="chat-messages-container">
             <message v-for="(message, index) in messages" :key="index" :bot-avatar="config.botAvatar"
                 :user-avatar="config.userAvatar" :content.sync="message.text" :is-bot="message.isBot"
-                :failure.sync="message.failure" :id="message.id">
+                :failure.sync="message.failure" :id.sync="message.id" :message-id.sync="message.id"
+                :done.sync="message.done">
             </message>
         </scroll-view>
         <div class="chat-input-container">
             <input v-model="inputMessage" @confirm="sendMessage" placeholder="在此输入内容" :disabled="disableInteract"
-                class="chat-input" />
+                class="chat-input" focus />
             <button @click="sendMessage" :disabled="disableInteract" class="chat-send-button">发送</button>
         </div>
     </div>
@@ -29,7 +30,7 @@ export default {
             },
             inputMessage: '',
             messages: [
-                { text: '你好，我是计网小助手！', isBot: true, failure: false, id: 'message-0' },
+                { text: '你好，我是计网小助手！', isBot: true, failure: false, id: 'message--initial', done: false },
             ],
             sessionId: null,
             scrollIntoView: '',
@@ -38,17 +39,28 @@ export default {
     },
     methods: {
         sendMessage () {
+            try {
+                this.sendMessageImpl()
+            } catch {
+                this.disableInteract = false
+                uni.showToast({
+                    title: '未知错误',
+                    icon: 'none'
+                })
+            }
+        },
+        sendMessageImpl () {
             if (this.inputMessage.trim() === '') return
             this.disableInteract = true
-            let message = { text: this.inputMessage.trim(), isBot: false, failure: false, id: 'message-' + this.messages.length }
+            let message = { text: this.inputMessage.trim(), isBot: false, failure: false, id: this.generateMessageUUID(), done: true }
             this.messages.push(message)
             this.scrollIntoView = this.messages[this.messages.length - 1].id
             this.inputMessage = ''
-            let responseMsg = { text: '', isBot: true, failure: false, id: 'message-' + this.messages.length }
+            let responseMsg = { text: '', isBot: true, failure: false, id: this.generateMessageUUID(), done: false }
             let timestamp = config.getCurrentDateTime()
             new Promise((resolve, reject) => {
                 uni.request({
-                    url: config.adornUrl('mpweixin/chatbot/send'),
+                    url: config.adornUrl('mpweixin/chatbot/message/send'),
                     method: 'POST',
                     data: {
                         sessionId: this.sessionId,
@@ -58,6 +70,7 @@ export default {
                     timeout: 1500,
                     success: res => {
                         if (res.statusCode === 200 && res.data.code === 200) {
+                            responseMsg.id = res.data.data.messageId
                             resolve(res)
                         } else {
                             reject({ type: 'send', error: res })
@@ -73,16 +86,18 @@ export default {
                     let generating = true
                     while (generating) {
                         uni.request({
-                            url: config.adornUrl('mpweixin/chatbot/receive'),
+                            url: config.adornUrl('mpweixin/chatbot/message/receive'),
                             method: 'GET',
                             data: {
                                 sessionId: this.sessionId,
+                                messageId: responseMsg.id,
                                 timestamp: timestamp,
                             },
                             timeout: 1500,
                             success: res => {
                                 if (res.statusCode === 200 && res.data.code === 200) {
                                     responseMsg.text += res.data.data.content
+                                    responseMsg.done = true
                                     generating = false
                                 } else if (res.statusCode === 200 && res.data.code === 100) {
                                     responseMsg.text += res.data.data.content
@@ -117,13 +132,16 @@ export default {
                 })
             })
         },
+        generateMessageUUID () {
+            return `${this.sessionId}--${config.generateUUID()}`
+        }
     },
     created () {
         this.sessionId = config.generateUUID()
     },
-    unmounted() {
+    unmounted () {
         uni.request({
-            url: config.adornUrl('mpweixin/chatbot/destroy'),
+            url: config.adornUrl('mpweixin/chatbot/session/destroy'),
             method: 'POST',
             data: {
                 sessionId: this.sessionId
@@ -150,10 +168,8 @@ export default {
 
 .chat-messages-container {
     flex-grow: 1;
-    padding: 0;
-    padding-left: 20rpx;
-    padding-top: 20rpx;
-    width: 730rpx;
+    padding: 20rpx;
+    width: 710rpx;
     overflow-y: auto;
     background-color: #F9F9F9;
 }

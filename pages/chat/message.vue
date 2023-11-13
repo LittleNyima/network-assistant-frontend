@@ -1,6 +1,9 @@
 <template>
     <div class="message-wrapper">
-        <img :src="isBot ? botAvatar : userAvatar" class="avatar" />
+        <div class="message-row">
+            <img :src="isBot ? botAvatar : userAvatar" class="avatar" />
+            <span>{{ isBot ? '计网小助手' : '你' }}</span>
+        </div>
         <div :class="{
             'bot-message': isBot,
             'user-message': !isBot,
@@ -9,17 +12,76 @@
         }">
             {{ content }}
         </div>
+        <div class="message-row" v-if="isBot && done">
+            <button class="flat-button" @tap="onReactionButtonTapped(true)" v-if="like !== false" :disabled="like !== null">
+                <uni-icons :type="getButtonIconType(true)" size="22"></uni-icons>
+            </button>
+            <button class="flat-button" @tap="onReactionButtonTapped(false)" v-if="like !== true" :disabled="like !== null">
+                <uni-icons :type="getButtonIconType(false)" size="22"></uni-icons>
+            </button>
+        </div>
     </div>
 </template>
 
 <script>
+import config from '@/common/config.js'
 export default {
+    data () {
+        return {
+            like: null
+        }
+    },
     props: {
         botAvatar: String,
         userAvatar: String,
         content: String,
+        messageId: String,
         isBot: Boolean,
-        failure: Boolean
+        failure: Boolean,
+        done: Boolean
+    },
+    methods: {
+        onReactionButtonTapped (isLike) {
+            let sessionId = this.messageId.split('--')[0]
+            new Promise((resolve, reject) => {
+                uni.request({
+                    url: config.adornUrl('mpweixin/chatbot/message/appraise'),
+                    method: 'POST',
+                    data: {
+                        sessionId: sessionId,
+                        messageId: this.messageId,
+                        like: isLike
+                    },
+                    timeout: 1500,
+                    success: res => {
+                        if (res.statusCode === 200 && res.data.code === 200) {
+                            resolve(res)
+                        } else {
+                            reject(res)
+                        }
+                    },
+                    fail: err => {
+                        reject(err)
+                    }
+                })
+            }).then(_ => {
+                this.like = isLike
+            }).catch(_ => {
+                uni.showToast({
+                    title: '评价失败',
+                    icon: 'error'
+                })
+            })
+
+            this.like = isLike
+        },
+        getButtonIconType (isLike) {
+            if (isLike) {
+                return this.like === isLike ? 'hand-up-filled' : 'hand-up'
+            } else {
+                return this.like === isLike ? 'hand-down-filled' : 'hand-down'
+            }
+        }
     }
 }
 </script>
@@ -27,24 +89,34 @@ export default {
 <style scoped>
 .message-wrapper {
     display: flex;
+    flex-direction: column;
+    max-width: 710rpx;
+    gap: 0.4em;
+    margin-bottom: 1.2em;
+}
+
+.message-row {
+    display: flex;
+    flex-direction: row;
+    gap: 0.5em;
+    align-items: center;
+    justify-content: flex-start;
+    color: #555555;
 }
 
 .avatar {
-    width: 72rpx;
-    height: 72rpx;
-    border-radius: 50%;
-    margin-top: 16rpx;
+    width: 20px;
+    height: 20px;
+    border-radius: 30%;
     flex-shrink: 0;
 }
 
 .message-box {
-    margin: 16rpx;
+    margin: 0;
     padding: 20rpx;
-    border-radius: 20rpx;
-    box-shadow: 0 4rpx 10rpx rgba(0, 0, 0, 0.3);
-    width: 560rpx;
-    max-width: 560rpx;
-    flex-grow: 1;
+    border-radius: 10rpx;
+    width: 670rpx;
+    max-width: 670rpx;
     word-wrap: break-word;
 }
 
@@ -62,5 +134,24 @@ export default {
 .failed-message {
     background-color: #FF4499;
     color: #FFF;
+}
+
+.flat-button {
+    background-color: transparent;
+    color: #000;
+    fill: #000;
+    padding: 0.6em;
+    display: flex;
+    flex-direction: row;
+    border: solid 1px #E4E7E7;
+    gap: 6px;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    font-weight: 450;
+    border-radius: 50%;
+    height: 2em;
+    width: 2em;
+    margin: 0;
 }
 </style>
