@@ -122,7 +122,7 @@ export default {
 
 .bot-message {
     text-align: left;
-    background-color: #FFF;
+    background-color: #F0F0F0;
 }
 
 .user-message {

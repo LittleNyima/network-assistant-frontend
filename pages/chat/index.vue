@@ -6,12 +6,27 @@
                 :failure.sync="message.failure" :id.sync="message.id" :message-id.sync="message.id"
                 :done.sync="message.done">
             </message>
+            <div id="scroll-view-placeholder"></div>
         </scroll-view>
-        <div class="chat-input-container">
-            <input v-model="inputMessage" @confirm="sendMessage" placeholder="在此输入内容" :disabled="disableInteract"
-                class="chat-input" focus />
-            <button @click="sendMessage" :disabled="disableInteract" class="chat-send-button">发送</button>
-        </div>
+        <footer class="chat-main-footer">
+            <div :class="{
+                'chat-message-input-container': true,
+                'active-message-input-container': textareaFocus
+            }">
+                <div class="growing-text-area-container">
+                    <textarea focus auto-height auto-focus auto-blur disable-default-padding placeholder="在此输入内容"
+                        cursor-spacing="33px" confirm-type="send" v-model="inputMessage" :disabled="disableInteract"
+                        @focus="onTextareaFocus" @blur="onTextareaBlur" @confirm="sendMessage"
+                        class="growing-text-area"></textarea>
+                </div>
+                <button @click="sendMessage" :disabled="disableInteract" :class="{
+                    'chat-send-button': true,
+                    'chat-send-button-disabled': disableInteract
+                }">
+                    <div class="chat-send-button-text">好</div>
+                </button>
+            </div>
+        </footer>
     </div>
 </template>
   
@@ -35,6 +50,7 @@ export default {
             sessionId: null,
             scrollIntoView: '',
             disableInteract: false,
+            textareaFocus: false
         }
     },
     methods: {
@@ -134,6 +150,12 @@ export default {
         },
         generateMessageUUID () {
             return `${this.sessionId}--${config.generateUUID()}`
+        },
+        onTextareaFocus (_) {
+            this.textareaFocus = true
+        },
+        onTextareaBlur (_) {
+            this.textareaFocus = false
         }
     },
     created () {
@@ -168,33 +190,95 @@ export default {
 
 .chat-messages-container {
     flex-grow: 1;
-    padding: 20rpx;
+    padding: 20rpx 20rpx 0;
     width: 710rpx;
     overflow-y: auto;
-    background-color: #F9F9F9;
+    background-color: #FFF;
 }
 
-.chat-input-container {
+#scroll-view-placeholder {
+    height: 100px;
+}
+
+.chat-main-footer {
+    position: sticky;
+    bottom: 0;
+    background: #FFF;
+    padding: 0.5rem 0 1rem;
+    width: 100%;
+    overflow-anchor: none;
+}
+
+.chat-message-input-container {
+    width: auto;
     display: flex;
-    align-items: center;
-    padding: 10rpx 20rpx;
-    background-color: #FFFFFF;
+    align-items: flex-end;
+    align-content: space-between;
+    border: 1px solid #CFD3D3;
+    border-radius: 1.5rem;
+    gap: 0.5rem;
+    margin: 0 0.5rem;
+    padding: 4px;
+    cursor: text;
+    position: relative;
+    flex: 1 1;
 }
 
-.chat-input {
-    flex-grow: 1;
+.active-message-input-container {
+    border: 2px solid #9944FF;
+}
+
+.growing-text-area-container {
+    flex: 1 1;
+    padding: 10px 0 12px 16px;
+    display: block;
+}
+
+.growing-text-area {
+    width: auto;
+    background-color: transparent;
+    font-size: 15px;
+    line-height: 18px;
     border: none;
-    border-radius: 10rpx;
-    margin-right: 20rpx;
+    padding: 0;
+    margin: 0;
+    max-height: 100px;
+    overflow-x: hidden;
+    grid-area: 1/1/2/2;
+    resize: none;
+    overflow-y: auto;
 }
 
 .chat-send-button {
-    background-color: #9944FF;
+    font-size: 16px;
+    padding: 0.5rem;
+    background: #9944FF;
     color: #FFF;
+    fill: #FFF;
+    display: flex;
+    flex-direction: row;
     border: none;
-    border-radius: 10rpx;
-    padding: 10rpx 20rpx;
+    gap: 6px;
+    align-items: center;
+    justify-content: center;
     cursor: pointer;
-    line-height: 1;
+    font-weight: 450;
+    text-align: center;
+    margin: 0;
+    border-radius: 1.5rem;
+    line-height: 24px;
+    min-width: 40px;
+}
+
+.chat-send-button-disabled {
+    opacity: 0.5;
+    cursor: default;
+}
+
+.chat-send-button-text {
+    height: 24px;
+    width: 24px;
+    min-width: 24px;
+    text-align: center;
 }
 </style>

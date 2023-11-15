@@ -1,5 +1,4 @@
-// let api = 'https://tbw.mynatapp.cc/'
-let api = 'http://120.53.94.114:8080/'
+let api = 'https://tbw.mynatapp.cc/'
 
 function adornUrl (path) {
     return api + path
