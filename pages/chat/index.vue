@@ -80,6 +80,7 @@ export default {
                     method: 'POST',
                     data: {
                         sessionId: this.sessionId,
+                        messageId: message.id,
                         content: message.text,
                         timestamp: timestamp,
                     },
@@ -107,7 +108,6 @@ export default {
                             data: {
                                 sessionId: this.sessionId,
                                 messageId: responseMsg.id,
-                                timestamp: timestamp,
                             },
                             timeout: 1500,
                             success: res => {
@@ -118,6 +118,7 @@ export default {
                                 } else if (res.statusCode === 200 && res.data.code === 100) {
                                     responseMsg.text += res.data.data.content
                                 } else {
+                                    generating = false
                                     reject({ type: 'receive', error: res })
                                 }
                             },

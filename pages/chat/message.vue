@@ -66,6 +66,10 @@ export default {
                 })
             }).then(_ => {
                 this.like = isLike
+                uni.showToast({
+                    title: isLike ? '点赞成功' : '已收到您的反馈',
+                    icon: 'none'
+                })
             }).catch(_ => {
                 uni.showToast({
                     title: '评价失败',
