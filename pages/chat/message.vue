@@ -10,7 +10,7 @@
             'message-box': true,
             'failed-message': failure
         }">
-            {{ content }}
+            <p v-for="(block, index) in displayedContent" :key="index">{{ block }}</p>
         </div>
         <div class="message-row" v-if="isBot && done">
             <button class="flat-button" @tap="onReactionButtonTapped(true)" v-if="like !== false" :disabled="like !== null">
@@ -29,6 +29,11 @@ export default {
     data () {
         return {
             like: null
+        }
+    },
+    computed: {
+        displayedContent () {
+            return this.content.trim().split('\n')
         }
     },
     props: {
